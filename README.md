@@ -1,4 +1,10 @@
-# Bigdataex
+# SPARK ETL APPLICATION
+
+Description: Creation of Spark ETL Application of joining two datasets and developed UDF logic.
+Used Employee dataset and department dataset and applied appropriate aggregations and joins.
+The transformed dataset is written to local directory as CSV file.
+
+
 
 Using Intellij idea setup :
 
