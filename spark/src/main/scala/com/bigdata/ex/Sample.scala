@@ -21,10 +21,10 @@ class Sample extends Transformation {
   var output_df:DataFrame = _
 
   override def initialize(): SparkSession =
-    {
-      spark = SparkSession.builder().appName("Sample Demonstration").master("local").getOrCreate()
-      return spark
-    }
+  {
+    spark = SparkSession.builder().appName("Sample Demonstration").master("local").getOrCreate()
+    return spark
+  }
 
   override  def read():DataFrame = {
 
@@ -33,9 +33,9 @@ class Sample extends Transformation {
       format("csv").
       option("inferSchema", true).
       option("header", true).
-      load("C:\\Users\\vishn\\Desktop\\Hadoop\\Employee")
+      load("C:\\Users\\data\\employee")
 
-      return input_df
+    return input_df
 
   }
 
@@ -47,7 +47,7 @@ class Sample extends Transformation {
       format("csv").
       option("inferSchema", true).
       option("header", true).
-      load("C:\\Users\\vishn\\Desktop\\Hadoop\\Departments")
+      load("C:\\Users\\data\\department")
 
     /*By Default sort merge joins will take place
        * 
@@ -59,7 +59,7 @@ class Sample extends Transformation {
        * 
        * */
 
-    val joined_df = input_df.as("emp").join(dept_df1.as("dept"), col("emp.DEPARTMENT_ID") === col("dept.DEPARTMENT_ID"), "inner").
+    val joined_df = input_df.as("emp").join(broadcast(dept_df1.as("dept")), col("emp.DEPARTMENT_ID") === col("dept.DEPARTMENT_ID"), "inner").
       drop(col("dept.DEPARTMENT_ID")).
       drop(col("dept.MANAGER_ID"))
 
@@ -72,27 +72,29 @@ class Sample extends Transformation {
     }
 
     val concat_udf1 = udf(concat_udf _)
+    val upperUDF = udf { s: String => s.toUpperCase }
 
-    val final_df = joined_df.withColumn("Full_name", concat_udf1(col("FIRST_NAME"), col("LAST_NAME")))
+    val final_df = joined_df.withColumn("Full_name", concat_udf1(col("FIRST_NAME"), col("LAST_NAME"))).
+      withColumn("Upper_case",upperUDF(col("FIRST_NAME")))
 
     /* using the show function to execute the process
      * as the spark executes lazily
-     * 
-     * 
+     *
+     *
      *  */
 
     output_df = final_df
+    output_df.show(20)
     return output_df
   }
-   override def write() ={
+  override def write() ={
 
-      output_df.repartition(1).write.
-        format("csv").
-        mode("overWrite").
-        option("header", true).
-        save("C:\\Users\\vishn\\Desktop\\Hadoop\\output")
-    }
-        spark.stop()
+    output_df.repartition(1).write.
+      format("csv").
+      mode("append").
+      option("header", true).
+      save("C:\\Users\\data\\output")
+  }
+
 
 }
-  
